@@ -54,6 +54,8 @@ namespace BlackJacket.WinnersPotButtons
         private float _layoutSize = -1f;
         private float _layoutSpacing = -1f;
         private float _layoutFont = -1f;
+        private bool _potBusy;
+        private bool _playerBusy;
 
         private void Update()
         {
@@ -533,6 +535,10 @@ namespace BlackJacket.WinnersPotButtons
                     return;
                 }
 
+                if (!BeginOperation(cluster))
+                {
+                    return;
+                }
                 StartCoroutine(AddCoinsCo(cluster, pot, add, liveCap, ignoreCap));
             }
             else
@@ -550,6 +556,10 @@ namespace BlackJacket.WinnersPotButtons
                     return;
                 }
 
+                if (!BeginOperation(cluster))
+                {
+                    return;
+                }
                 StartCoroutine(AddCoinsCo(cluster, stash, add, liveCap, false));
             }
         }
@@ -645,7 +655,7 @@ namespace BlackJacket.WinnersPotButtons
 
                 int target = cap == -1 ? pot.CoinAmount + 10 : cap;
                 int add = target - pot.CoinAmount;
-                if (add > 0)
+                if (add > 0 && BeginOperation(cluster))
                 {
                     StartCoroutine(AddCoinsCo(cluster, pot, add, cap, false));
                 }
@@ -668,7 +678,7 @@ namespace BlackJacket.WinnersPotButtons
 
                 int target = cap == -1 ? stash.CoinAmount + 10 : cap;
                 int add = target - stash.CoinAmount;
-                if (add > 0)
+                if (add > 0 && BeginOperation(cluster))
                 {
                     StartCoroutine(AddCoinsCo(cluster, stash, add, cap, false));
                 }
@@ -709,22 +719,35 @@ namespace BlackJacket.WinnersPotButtons
 
         private IEnumerator AddCoinsCo(Cluster cluster, CoinZone zone, int amount, int liveCap, bool ignoreCap)
         {
-            int effectiveCap = ignoreCap || liveCap == -1 ? -1 : liveCap;
-            zone.MaxCoinAmount = effectiveCap;
+            try
+            {
+                int effectiveCap = ignoreCap || liveCap == -1 ? -1 : liveCap;
+                zone.MaxCoinAmount = effectiveCap;
 
-            yield return zone.CreateCoinsWithEffect(amount, null, false,
-                cluster == Cluster.WinnersPot ? CoinAnimator.AudioType.CreateInWinnersPot : CoinAnimator.AudioType.Win);
+                yield return zone.CreateCoinsWithEffect(amount, null, false,
+                    cluster == Cluster.WinnersPot ? CoinAnimator.AudioType.CreateInWinnersPot : CoinAnimator.AudioType.Win);
 
-            zone.MaxCoinAmount = liveCap;
-            zone.UpdateCoinCountText();
-            SyncCampaignState(cluster, zone);
+                zone.MaxCoinAmount = liveCap;
+                zone.UpdateCoinCountText();
+                SyncCampaignState(cluster, zone);
+            }
+            finally
+            {
+                EndOperation(cluster);
+            }
         }
 
         private void RemoveCoinsFromZone(Cluster cluster, CoinZone zone, int amount)
         {
+            if (!BeginOperation(cluster))
+            {
+                return;
+            }
+
             var coins = zone.AllCoins;
             if (coins == null || coins.Length == 0)
             {
+                EndOperation(cluster);
                 return;
             }
 
@@ -760,6 +783,7 @@ namespace BlackJacket.WinnersPotButtons
 
             if (toRemove.Count == 0)
             {
+                EndOperation(cluster);
                 return;
             }
 
@@ -768,9 +792,15 @@ namespace BlackJacket.WinnersPotButtons
 
         private void RemoveAllCoinsFromZone(Cluster cluster, CoinZone zone)
         {
+            if (!BeginOperation(cluster))
+            {
+                return;
+            }
+
             var coins = zone.AllCoins;
             if (coins == null || coins.Length == 0)
             {
+                EndOperation(cluster);
                 return;
             }
 
@@ -785,6 +815,7 @@ namespace BlackJacket.WinnersPotButtons
 
             if (toRemove.Count == 0)
             {
+                EndOperation(cluster);
                 return;
             }
 
@@ -793,8 +824,48 @@ namespace BlackJacket.WinnersPotButtons
 
         private IEnumerator RemoveCoinsCo(Cluster cluster, CoinZone zone, List<CoinVisual> coins)
         {
-            yield return zone.DestroyCoinsWithAnimation(coins.ToArray());
-            SyncCampaignState(cluster, zone);
+            try
+            {
+                yield return zone.DestroyCoinsWithAnimation(coins.ToArray());
+                SyncCampaignState(cluster, zone);
+            }
+            finally
+            {
+                EndOperation(cluster);
+            }
+        }
+
+        private bool BeginOperation(Cluster cluster)
+        {
+            if (cluster == Cluster.WinnersPot)
+            {
+                if (_potBusy)
+                {
+                    return false;
+                }
+                _potBusy = true;
+            }
+            else
+            {
+                if (_playerBusy)
+                {
+                    return false;
+                }
+                _playerBusy = true;
+            }
+            return true;
+        }
+
+        private void EndOperation(Cluster cluster)
+        {
+            if (cluster == Cluster.WinnersPot)
+            {
+                _potBusy = false;
+            }
+            else
+            {
+                _playerBusy = false;
+            }
         }
 
         private static void SyncCampaignState(Cluster cluster, CoinZone zone)
