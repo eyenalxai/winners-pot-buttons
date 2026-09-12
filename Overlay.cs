@@ -226,7 +226,14 @@ namespace BlackJacket.WinnersPotButtons
                     anchor = cluster == Cluster.WinnersPot ? _matchPotAnchor : _matchPlayerAnchor;
                     break;
                 case HudContext.Shop:
-                    anchor = cluster == Cluster.WinnersPot ? _shopPotAnchor : _shopPlayerAnchor;
+                    if (cluster == Cluster.WinnersPot)
+                    {
+                        anchor = GetShopPotGraphic(gc) ?? _shopPotAnchor;
+                    }
+                    else
+                    {
+                        anchor = GetShopPlayerGraphic(gc) ?? _shopPlayerAnchor;
+                    }
                     break;
                 case HudContext.Campaign:
                     anchor = cluster == Cluster.WinnersPot ? _campaignPotAnchor : _campaignPlayerAnchor;
@@ -248,6 +255,40 @@ namespace BlackJacket.WinnersPotButtons
         private static bool IsUsable(Transform anchor)
         {
             return anchor != null && anchor.gameObject.activeInHierarchy;
+        }
+
+        /// <summary>
+        /// While shopping, the pot and the player's coins are physical objects on the shop
+        /// table. Anchor the button grids to those objects instead of to the HUD numbers.
+        /// </summary>
+        private static Transform GetShopPotGraphic(GameController gc)
+        {
+            var pot = gc.UI != null ? gc.UI.WinnersPot : null;
+            if (pot == null)
+            {
+                return null;
+            }
+
+            var bowl = pot.transform.Find("BackgroundWinnersPot");
+            if (bowl != null)
+            {
+                return bowl;
+            }
+
+            var root = pot.CoinRoot;
+            return root != null ? root : pot.transform;
+        }
+
+        private static Transform GetShopPlayerGraphic(GameController gc)
+        {
+            var stash = GetPlayerZone(gc);
+            if (stash == null)
+            {
+                return null;
+            }
+
+            var root = stash.CoinRoot;
+            return root != null ? root : stash.transform;
         }
 
         // ------------------------------------------------------------------ ui
@@ -442,24 +483,17 @@ namespace BlackJacket.WinnersPotButtons
             Vector2 bottomLeft = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
             Vector2 topLeft = RectTransformUtility.WorldToScreenPoint(cam, corners[1]);
             Vector2 topRight = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
-            Vector2 bottomRight = RectTransformUtility.WorldToScreenPoint(cam, corners[3]);
 
             Vector2 center = (bottomLeft + topRight) * 0.5f;
             float topY = (topLeft.y + topRight.y) * 0.5f;
-            float bottomY = (bottomLeft.y + bottomRight.y) * 0.5f;
 
             float margin = Mathf.Max(0f, cfg.Margin.Value);
             float halfWidth = width * 0.5f;
             float halfHeight = height * 0.5f;
 
+            // Fixed rule: the grid is centred above the object it belongs to.
             float x = center.x + cfg.NudgeX.Value;
             float y = topY + margin + halfHeight + cfg.NudgeY.Value;
-
-            // Prefer placing the grid above the counter; drop below when there is no room.
-            if (y + halfHeight > Screen.height - 2f)
-            {
-                y = bottomY - margin - halfHeight + cfg.NudgeY.Value;
-            }
 
             x = Mathf.Clamp(x, halfWidth + 2f, Screen.width - halfWidth - 2f);
             y = Mathf.Clamp(y, halfHeight + 2f, Screen.height - halfHeight - 2f);

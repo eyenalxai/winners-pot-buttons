@@ -10,7 +10,7 @@ namespace BlackJacket.WinnersPotButtons
     {
         public const string PluginGuid = "com.blackjacket.mods.winnerspotbuttons";
         public const string PluginName = "Black Jacket - Winners Pot Buttons";
-        public const string PluginVersion = "1.1.0";
+        public const string PluginVersion = "1.1.1";
 
         internal static ManualLogSource Log;
         internal static Settings Cfg;

@@ -10,9 +10,9 @@ Each pot gets eight buttons:
 - `+1`, `+5`, `+10` – add coins
 - `MAX` – fill it up to its cap
 
-The buttons are placed next to whichever counter is currently visible (the match HUD, the shop HUD
-or the campaign HUD). The winners pot cap is read live, so cap upgrades bought in a shop (for
-example `+5` winners pot size) work immediately. While a match or shop is running, the player's
+The buttons are placed next to whichever counter is currently visible: the match HUD, the campaign
+HUD, or — while shopping — the actual pot and coin pile on the table. The winners pot cap is read
+live, so cap upgrades bought in a shop (for example `+5` winners pot size) work immediately. While a match or shop is running, the player's
 coins and the pot are the real table zones, so the game synchronises them into your run as usual;
 on the campaign map the values are written directly to the campaign state.
 
