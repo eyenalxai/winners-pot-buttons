@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>WinnersPotButtons</AssemblyName>
     <RootNamespace>BlackJacket.WinnersPotButtons</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -27,6 +27,10 @@
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Mipumi.Toolbox">
+      <HintPath>$(ManagedDir)/Mipumi.Toolbox.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">
